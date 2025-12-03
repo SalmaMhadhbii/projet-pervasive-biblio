@@ -1,11 +1,19 @@
-function App() {
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Map from './pages/Reservation'
+import Navbar from './components/Navbar'
+import Reservation from './pages/Reservation'
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center">
-      <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-        Tailwind v4 is working! 🎉
-      </h1>
-    </div>
+    <BrowserRouter>
+      <Navbar />
+      <div className="pt-20">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/reservation" element={<Reservation />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   )
 }
-
-export default App
