@@ -1,0 +1,75 @@
+[
+  {
+    "id": "zone-a",
+    "name": "Zone A - Lecture",
+    "type": "Silencieuse",
+    "floor": "Étage 1",
+    "icon": "Silence",
+    "status": "Recommandé",
+    "color": "green",
+    "occupation": 12,
+    "capacity": 22,
+    "noise": "Silencieux",
+    "noiseLevel": 28,
+    "seats": [
+      false, false, true, false, true, false, true, false, false, true,
+      false, true, false, true, false, false, true, false, true, false,
+      false, false
+    ]
+  },
+  {
+    "id": "zone-b",
+    "name": "Zone B - Travail Collaboratif",
+    "type": "Collaboratif",
+    "floor": "Étage 1",
+    "icon": "Volume",
+    "status": "Disponible",
+    "color": "yellow",
+    "occupation": 15,
+    "capacity": 22,
+    "noise": "Modéré",
+    "noiseLevel": 68,
+    "seats": [
+      true, true, true, false, true, true, false, true, true, false,
+      true, false, true, true, false, true, true, false, true, true,
+      false, true
+    ]
+  },
+  {
+    "id": "zone-c",
+    "name": "Zone C - Espace Multimédia",
+    "type": "Multimédia",
+    "floor": "Étage 2",
+    "icon": "Warning",
+    "status": "Occupé",
+    "color": "gray",
+    "occupation": 22,
+    "capacity": 22,
+    "noise": "Bruyant",
+    "noiseLevel": 88,
+    "alert": true,
+    "seats": [
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+      true, true 
+    ]
+  },
+  {
+    "id": "zone-d",
+    "name": "Zone D - Salle d'Étude",
+    "type": "Silencieuse",
+    "floor": "Étage 2",
+    "icon": "Silence",
+    "status": "Recommandé",
+    "color": "green",
+    "occupation": 5,
+    "capacity": 22,
+    "noise": "Silencieux",
+    "noiseLevel": 22,
+    "seats": [
+      false, false, false, true, false, false, true, false,
+      false, true, false, false, true, false, false, false,
+      true, false 
+    ]
+  }
+]
