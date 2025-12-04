@@ -1,0 +1,19 @@
+{
+  "averageOccupation": {
+    "value": "68%",
+    "trend": "+5%",
+    "subtitle": "+5% par rapport à la semaine dernière"
+  },
+  "peakHours": {
+    "range": "13h-15h",
+    "occupation": "92% d'occupation"
+  },
+  "silentZones": {
+    "ratio": "6/10",
+    "percentage": "60% du temps"
+  },
+  "trend": {
+    "value": "+12%",
+    "subtitle": "Fréquentation en hausse"
+  }
+}

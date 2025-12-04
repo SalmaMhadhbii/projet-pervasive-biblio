@@ -1,0 +1,9 @@
+[
+  { "day": "Lun", "value": 45 },
+  { "day": "Mar", "value": 52 },
+  { "day": "Mer", "value": 68 },
+  { "day": "Jeu", "value": 55 },
+  { "day": "Ven", "value": 72 },
+  { "day": "Sam", "value": 30 },
+  { "day": "Dim", "value": 25 }
+]

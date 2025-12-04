@@ -1,0 +1,7 @@
+[
+  { "time": "9h-11h", "value": 0 },
+  { "time": "11h-13h", "value": 78 },
+  { "time": "13h-15h", "value": 92 },
+  { "time": "15h-17h", "value": 85 },
+  { "time": "17h-19h", "value": 62 }
+]

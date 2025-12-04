@@ -39,6 +39,17 @@ export default function Navbar() {
           >
             Carte & Réservation
           </a>
+
+          <a
+            href="/statistiques"
+            className={`transition ${
+              location.pathname === '/statistiques'
+                ? 'text-indigo-600 font-bold border-b-4 border-indigo-600 pb-1'
+                : 'text-gray-600 hover:text-indigo-600'
+            }`}
+          >
+            Statistiques
+          </a>
         </nav>
       </div>
     </header>
