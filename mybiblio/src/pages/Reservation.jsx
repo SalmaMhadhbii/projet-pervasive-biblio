@@ -1,68 +1,183 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
-import { Filter, Volume2, Users, BookOpen} from 'lucide-react';
+import { Filter, Volume2, Users, BookOpen, X} from 'lucide-react';
 import zonesData from '../assets/data/Zones.json';
 
 export default function Reservation() {
+  const [zones, setZones] = useState(zonesData);
   const [selectedZone, setSelectedZone] = useState(zonesData[0]);
   const [selectedSeat, setSelectedSeat] = useState(null);
+  const [reservedSeat, setReservedSeat] = useState(null);
+  const [showChangeModal, setShowChangeModal] = useState(false);
+  const [pendingSeat, setPendingSeat] = useState(null);
   const [search, setSearch] = useState('');
   const [noiseFilter, setNoiseFilter] = useState('all');
 
-  const filteredZones = zonesData.filter(zone => {
+
+
+  // (simulation automatique)
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setZones(prevZones => 
+      prevZones.map(zone => {
+        // 1. Calcule la nouvelle occupation
+        const change = Math.floor(Math.random() * 5) - 2; // -2 à +2 personnes
+        const newOccupation = Math.max(0, Math.min(zone.capacity, zone.occupation + change));
+
+        // 2. MET À JOUR LE TABLEAU seats (c’est ÇA qui manquait !)
+        const newSeats = [...zone.seats];
+        const diff = newOccupation - zone.occupation;
+
+        if (diff > 0) {
+          // Quelqu’un s’assoit → on trouve des places libres aléatoirement
+          let added = 0;
+          while (added < diff) {
+            const randomIndex = Math.floor(Math.random() * zone.capacity);
+            if (!newSeats[randomIndex]) {
+              newSeats[randomIndex] = true;
+              added++;
+            }
+          }
+        } else if (diff < 0) {
+          // Quelqu’un part → on libère des places occupées
+          let removed = 0;
+          while (removed < -diff) {
+            const randomIndex = Math.floor(Math.random() * zone.capacity);
+            if (newSeats[randomIndex]) {
+              newSeats[randomIndex] = false;
+              removed++;
+            }
+          }
+        }
+
+        // 3. Niveau sonore réaliste
+        const noiseLevel = Math.round(20 + (newOccupation / zone.capacity) * 40 + Math.random() * 10);
+
+        return {
+          ...zone,
+          seats: newSeats,           // ← CLÉ MAGIQUE
+          occupation: newOccupation,
+          noiseLevel: noiseLevel,
+          noise: noiseLevel < 32 ? "Silencieux" : noiseLevel < 48 ? "Modéré" : "Bruyant"
+        };
+      })
+    );
+  }, 15000); // toutes les 15 secondes
+
+  return () => clearInterval(interval);
+}, []);
+
+
+ // Utilise "zones" au lieu de "zonesData"
+  const filteredZones = zones.filter(zone => {
     const matchesSearch = zone.name.toLowerCase().includes(search.toLowerCase());
     const matchesNoise = noiseFilter === 'all' || zone.noise === noiseFilter;
     return matchesSearch && matchesNoise;
   });
 
-  const currentZone = selectedZone;
+  // Met à jour la zone sélectionnée quand les données changent
+  const currentZone = zones.find(z => z.id === selectedZone.id) || selectedZone;
 
-  const confirmReservation = () => {
-    if (selectedSeat === null) return;
-    currentZone.seats[selectedSeat] = true;
-    currentZone.occupation += 1;
-    setSelectedSeat(null);
-    alert(`Place #${selectedSeat + 1} réservée dans ${currentZone.name} !`);
+  // Ajoute cette ligne APRÈS const currentZone = ...
+useEffect(() => {
+  // Quand les zones changent, on garde la bonne zone sélectionnée
+  const updatedZone = zones.find(z => z.id === selectedZone.id);
+  if (updatedZone && updatedZone !== selectedZone) {
+    setSelectedZone(updatedZone);
+  }
+}, [zones]);
+  
+  
+  
+  
+  // NOUVELLE FONCTION : quand on clique sur une place
+  // Gestion du clic sur une place
+  const handleSeatClick = (index) => {
+    const isTakenByOthers = currentZone.seats[index] && index !== reservedSeat;
+
+    if (isTakenByOthers) return;
+
+    if (reservedSeat !== null && index !== reservedSeat) {
+      // Tu as déjà réservé → on ouvre la modale stylée
+      setPendingSeat(index);
+      setShowChangeModal(true);
+      return;
+    }
+
+    // Première réservation ou clic sur sa propre place réservée
+    setSelectedSeat(index);
   };
 
-  const renderSeat = (index, position = "normal") => {
-  //   Elle vérifie si la place index est occupée (true) ou libre (false) directement depuis le JSON
-  const taken = currentZone.seats[index];
-  const isSelected = selectedSeat === index;
+  // Confirmation du changement de place
+  const confirmChangeSeat = () => {
+    if (pendingSeat === null) return;
 
-  return (
-    <button
-      key={index}
-      onClick={() => !taken && setSelectedSeat(index)}
-      disabled={taken}
-      className={`
-        relative w-14 h-14 rounded-lg font-bold text-white transition-all duration-300 shadow-xl
-        ${position === "top" ? "rotate-180" : ""}
-        ${position === "solo" ? "w-20 h-20 rounded-full" : ""}
-        ${isSelected
-         ? 'bg-gradient-to-br from-fuchsia-300 to-violet-300 scale-130 ring-2 ring-violet-400/70 shadow-2xl z-50'
-          : taken
-           
-          ? 'bg-gradient-to-b from-red-100 to-red-300 border-2 border-red-400 opacity-70 cursor-not-allowed'
-          : 'bg-gradient-to-b from-emerald-200 to-teal-300 border-2 border-teal-400 hover:from-emerald-300 hover:to-teal-500 hover:scale-110 hover:shadow-2xl'
-        }
-      `}
-    >
-      {isSelected ? (
-        // <Check className="w-10 h-10 ml-2 stroke-[2]" />
-        <span className="drop-shadow-lg">{index + 1}</span>
-      ) : taken ? (
-        <span className="text-2xl"> </span>
-      ) : (
-        <span className="drop-shadow-lg">{index + 1}</span>
-      )}
-      {/* Effet lampe de lecture */}
-      {/* {!taken && !isSelected && (
-        <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-8 h-8 bg-yellow-300 rounded-full blur-xl opacity-40"></div>
-      )} */}
-    </button>
-  );
-};
+    setZones(prev => prev.map(zone =>
+      zone.id === currentZone.id
+        ? {
+            ...zone,
+            seats: zone.seats.map((s, i) =>
+              i === reservedSeat ? false :
+              i === pendingSeat ? true : s
+            ),
+            // occupation reste identique
+          }
+        : zone
+    ));
+
+    setReservedSeat(pendingSeat);
+    setPendingSeat(null);
+    setShowChangeModal(false);
+    setSelectedSeat(null);
+    alert(`Réservation changée → Place #${pendingSeat + 1}`);
+  };
+
+  // Confirmation finale de réservation
+  const confirmReservation = () => {
+    if (selectedSeat === null) return;
+
+    setZones(prev => prev.map(zone =>
+      zone.id === currentZone.id
+        ? {
+            ...zone,
+            seats: zone.seats.map((s, i) => i === selectedSeat ? true : s),
+            occupation: zone.occupation + 1
+          }
+        : zone
+    ));
+
+    setReservedSeat(selectedSeat);
+    setSelectedSeat(null);
+    alert(`Place #${selectedSeat + 1} réservée avec succès !`);
+  };
+
+  // Rendu des sièges (violet = sélectionné OU réservé par toi)
+  const renderSeat = (index, position = "normal") => {
+    const taken = currentZone.seats[index];
+    const isSelected = selectedSeat === index;
+    const isReservedByUser = reservedSeat === index;
+
+    return (
+      <button
+        key={index}
+        onClick={() => handleSeatClick(index)}
+        disabled={taken && !isReservedByUser}
+        className={`
+          relative w-14 h-14 rounded-lg font-bold text-white transition-all duration-500 shadow-2xl
+          ${position === "top" ? "rotate-180" : ""}
+          ${position === "solo" ? "w-20 h-20 rounded-full" : ""}
+          ${isReservedByUser || isSelected
+            ? 'bg-gradient-to-br from-fuchsia-300 via-purple-300 to-violet-300  ring-2 ring-purple-400/70'
+            : taken
+              ? 'bg-gradient-to-b from-red-100 to-red-300 border-2 border-red-400 opacity-70 cursor-not-allowed'
+              : 'bg-gradient-to-b from-emerald-200 to-teal-300 border-2 border-teal-400 hover:from-emerald-300 hover:to-teal-500 hover:scale-110 hover:shadow-2xl'
+          }
+        `}
+      >
+        <span className="drop-shadow-2xl text-lg">{index + 1}</span>
+      </button>
+    );
+  };
 
   return (
     <MainLayout
@@ -255,47 +370,122 @@ export default function Reservation() {
             </div>
           </div>
 
-         {selectedSeat !== null && (
-            <div className="bg-white rounded-2xl p-8 shadow-xl border border-slate-200">
-              <h3 className="text-3xl font-bold text-center mb-10 text-slate-800">
-                Récapitulatif de réservation
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 text-center">
-                {/* Zone */}
-                <div>
-                  <p className="text-slate-500 text-sm uppercase tracking-wider">Zone</p>
-                  <p className="text-2xl font-black text-slate-900 mt-3">{currentZone.name}</p>
+          {/* MODALE STYLÉE */}
+          {showChangeModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate__animated animate__zoomIn">
+                <div className="flex justify-between items-center mb-6">
+                  {/* <div span=" "></div> */}
+                  <h3 className="text-3xl text-center font-black bg-gray-700 bg-clip-text text-transparent">
+                    Changer de place ?
+                  </h3>
+                  <button
+                    onClick={() => setShowChangeModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
                 </div>
 
-                {/* Place */}
-                <div>
-                  <p className="text-slate-500 text-sm uppercase tracking-wider">Place</p>
-                  <p className="text-5xl font-black text-indigo-600 mt-3">#{selectedSeat + 1}</p>
+                <div className="text-center space-y-6">
+                  <div className="text-6xl font-black text-indigo-600">
+                    #{reservedSeat + 1}
+                  </div>
+                  <p className="text-gray-600 text-lg">
+                    Tu as déjà réservé la <span className="font-bold text-indigo-600">place #{reservedSeat + 1}</span>
+                  </p>
+                  <div className="text-5xl">↓</div>
+                  <div className="text-6xl font-black text-indigo-600">
+                    #{pendingSeat + 1}
+                  </div>
+                  <p className="text-gray-700 text-xl font-medium">
+                    Tu veux maintenant la place #{pendingSeat + 1} ?
+                  </p>
                 </div>
 
-                {/* Ambiance – même style que dans la liste des zones */}
-                <div>
-                  <p className="text-slate-500 text-sm uppercase tracking-wider mb-3">Ambiance</p>
-                  <span className={`inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold shadow-sm ${
-                    currentZone.noise === 'Silencieux' 
-                      ? 'bg-emerald-100 text-emerald-700' 
-                      : currentZone.noise === 'Modéré' 
-                      ? 'bg-amber-100 text-amber-700' 
-                      : 'bg-rose-100 text-rose-700'
-                  }`}>
-                    <Volume2 className="w-5 h-5" />
-                    {currentZone.noise}
-                  </span>
+                <div className="flex gap-4 mt-10">
+                  <button
+                    onClick={() => setShowChangeModal(false)}
+                    className="flex-1 py-4 bg-gray-200 text-gray-800 rounded-2xl font-bold hover:bg-gray-300 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={confirmChangeSeat}
+                    className="flex-1 py-4 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-2xl font-bold hover:shadow-xl transform hover:scale-105 transition"
+                  >
+                    Oui, changer !
+                  </button>
                 </div>
               </div>
+            </div>
+          )}
 
-              <button
-                onClick={confirmReservation}
-                className="mt-12 w-full bg-gradient-to-b from-indigo-400 to-violet-500 text-white font-bold text-xl py-6 rounded-xl hover:bg-indigo-700 transition transform hover:scale-105 shadow-lg"
-              >
-                Confirmer la réservation
-              </button>
+                   {/* MODALE DE CONFIRMATION DE RÉSERVATION — REMPLACE LE RÉCAPITULATIF */}
+          {selectedSeat !== null && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-10 relative overflow-hidden">
+                <div className="relative z-10 text-center space-y-8">
+                  {/* Titre */}
+                  <div>
+                    <h2 className="text-4xl font-black bg-gray-600 bg-clip-text text-transparent">
+                      Confirmer ta place ?
+                    </h2>
+                    <p className="text-gray-600 mt-4 text-lg">Cette place sera réservée rien que pour toi !</p>
+                  </div>
+
+                  {/* Carte récap */}
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 ">
+                    <div className="grid grid-cols-3 gap-6">
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider">Zone</p>
+                        <p className="text-2xl font-bold text-gray-600 mt-2">{currentZone.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider">Place</p>
+                        <p className="text-5xl font-black text-gray-700 mt-2">#{selectedSeat + 1}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 uppercase tracking-wider mb-3">Ambiance</p>
+                        <span className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-lg font-bold shadow-lg ${
+                          currentZone.noise === 'Silencieux' 
+                            ? 'bg-emerald-100 text-emerald-800' 
+                            : currentZone.noise === 'Modéré' 
+                            ? 'bg-amber-100 text-amber-800' 
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          <Volume2 className="w-5 h-5" />
+                          {currentZone.noise}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Boutons */}
+                  <div className="flex gap-6 pt-6">
+                    <button
+                      onClick={() => setSelectedSeat(null)}
+                      className="flex-1 py-2 bg-gray-100 text-gray-700 rounded-2xl font-bold text-xl hover:bg-gray-200 transition transform hover:scale-105"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={confirmReservation}
+                      className="flex-1 py-2 bg-gradient-to-b from-indigo-400 to-purple-400 text-white rounded-2xl font-bold text-xl shadow-2xl hover:shadow-purple-500/50 transform hover:scale-105 transition"
+                    >
+                      Confirmer la réservation !
+                    </button>
+                  </div>
+                </div>
+
+                {/* Croix en haut à droite */}
+                <button
+                  onClick={() => setSelectedSeat(null)}
+                  className="absolute top-6 right-6 p-3 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+                >
+                  <X className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -4,17 +4,17 @@
     "name": "Zone A - Lecture",
     "type": "Silencieuse",
     "floor": "Étage 1",
-    "icon": "Silence",
-    "status": "Recommandé",
-    "color": "green",
-    "occupation": 12,
+    "icon": "Volume",
+    "status": "Disponible",
+    "color": "yellow",
+    "occupation": 15,
     "capacity": 22,
-    "noise": "Silencieux",
-    "noiseLevel": 28,
+    "noise": "Modéré",
+    "noiseLevel": 68,
     "seats": [
-      false, false, true, false, true, false, true, false, false, true,
-      false, true, false, true, false, false, true, false, true, false,
-      false, false
+      true, true, true, false, true, true, false, true, true, false,
+      true, false, true, true, false, true, true, false, true, true,
+      false, true
     ]
   },
   {
@@ -51,7 +51,7 @@
     "seats": [
       true, true, true, true, true, true, true, true, true, true,
       true, true, true, true, true, true, true, true, true, true,
-      true, true 
+      true, true
     ]
   },
   {
@@ -67,9 +67,9 @@
     "noise": "Silencieux",
     "noiseLevel": 22,
     "seats": [
-      false, false, false, true, false, false, true, false,
-      false, true, false, false, true, false, false, false,
-      true, false 
+      false, false, false, false, false, true, false, false, false, false,
+      false, false, true, false, false, false, false, true, false, false,
+      false, false
     ]
   }
 ]
