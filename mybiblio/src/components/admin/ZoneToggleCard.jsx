@@ -20,12 +20,13 @@ export default function ZoneToggleCard({ zone, onToggle, onSendNudge }) {
         {/* Infos zone */}
         <div>
           <h3 className="font-semibold text-lg text-slate-900">{zone.name}</h3>
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex flex-wrap items-center gap-3 mt-2">
             {zone.alerts > 0 && (
               <span className="px-3 py-1 text-xs font-bold text-white bg-red-400 rounded-full">
                 {zone.alerts} alerte{zone.alerts > 1 ? "s" : ""}
               </span>
             )}
+
             <span
               className={`px-3 py-1 text-xs font-medium rounded-full ${
                 zone.active
@@ -35,7 +36,23 @@ export default function ZoneToggleCard({ zone, onToggle, onSendNudge }) {
             >
               {zone.active ? "Active" : "Inactive"}
             </span>
+
+            {/* === INDICATEUR SONORE === */}
+            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+              {zone.noiseLevel} dB
+            </span>
+
+            <span
+              className={`px-3 py-1 text-xs font-semibold rounded-full
+                ${zone.noise === "Silencieux" && "bg-green-100 text-green-700"}
+                ${zone.noise === "Modéré" && "bg-yellow-100 text-yellow-700"}
+                ${zone.noise === "Bruyant" && "bg-red-100 text-red-700"}
+              `}
+            >
+              {zone.noise}
+            </span>
           </div>
+
         </div>
       </div>
 

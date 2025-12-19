@@ -1,79 +1,38 @@
-import { useState, useEffect } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import { Filter, Volume2, Users, BookOpen, X} from 'lucide-react';
-import zonesData from '../assets/data/Zones.json';
+import { useState, useEffect } from 'react';
+import { useZones } from '../context/ZonesContext';
+import { toast } from 'react-hot-toast';
+import { Bell } from 'lucide-react';
 
 export default function Reservation() {
-  const [zones, setZones] = useState(zonesData);
-  const [selectedZone, setSelectedZone] = useState(zonesData[0]);
+  const {
+    zones,
+    setZones,
+    reservedZoneId,
+    setReservedZoneId,
+    addAlert
+  } = useZones();
+
+const [selectedZone, setSelectedZone] = useState(zones[0]);
+
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [reservedSeat, setReservedSeat] = useState(null);
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [pendingSeat, setPendingSeat] = useState(null);
-  const [search, setSearch] = useState('');
-  const [noiseFilter, setNoiseFilter] = useState('all');
+  //const [search, setSearch] = useState('');
+  //const [noiseFilter, setNoiseFilter] = useState('all');
 
 
 
-  // (simulation automatique)
-  useEffect(() => {
-  const interval = setInterval(() => {
-    setZones(prevZones => 
-      prevZones.map(zone => {
-        // 1. Calcule la nouvelle occupation
-        const change = Math.floor(Math.random() * 5) - 2; // -2 à +2 personnes
-        const newOccupation = Math.max(0, Math.min(zone.capacity, zone.occupation + change));
+   
 
-        // 2. MET À JOUR LE TABLEAU seats (c’est ÇA qui manquait !)
-        const newSeats = [...zone.seats];
-        const diff = newOccupation - zone.occupation;
-
-        if (diff > 0) {
-          // Quelqu’un s’assoit → on trouve des places libres aléatoirement
-          let added = 0;
-          while (added < diff) {
-            const randomIndex = Math.floor(Math.random() * zone.capacity);
-            if (!newSeats[randomIndex]) {
-              newSeats[randomIndex] = true;
-              added++;
-            }
-          }
-        } else if (diff < 0) {
-          // Quelqu’un part → on libère des places occupées
-          let removed = 0;
-          while (removed < -diff) {
-            const randomIndex = Math.floor(Math.random() * zone.capacity);
-            if (newSeats[randomIndex]) {
-              newSeats[randomIndex] = false;
-              removed++;
-            }
-          }
-        }
-
-        // 3. Niveau sonore réaliste
-        const noiseLevel = Math.round(20 + (newOccupation / zone.capacity) * 40 + Math.random() * 10);
-
-        return {
-          ...zone,
-          seats: newSeats,           // ← CLÉ MAGIQUE
-          occupation: newOccupation,
-          noiseLevel: noiseLevel,
-          noise: noiseLevel < 32 ? "Silencieux" : noiseLevel < 48 ? "Modéré" : "Bruyant"
-        };
-      })
-    );
-  }, 15000); // toutes les 15 secondes
-
-  return () => clearInterval(interval);
-}, []);
-
-
- // Utilise "zones" au lieu de "zonesData"
-  const filteredZones = zones.filter(zone => {
-    const matchesSearch = zone.name.toLowerCase().includes(search.toLowerCase());
-    const matchesNoise = noiseFilter === 'all' || zone.noise === noiseFilter;
-    return matchesSearch && matchesNoise;
-  });
+ // filtrage
+  // const filteredZones = zones.filter(zone => {
+  //   const matchesSearch = zone.name.toLowerCase().includes(search.toLowerCase());
+  //   const matchesNoise = noiseFilter === 'all' || zone.noise === noiseFilter;
+  //   return matchesSearch && matchesNoise;
+  // });
 
   // Met à jour la zone sélectionnée quand les données changent
   const currentZone = zones.find(z => z.id === selectedZone.id) || selectedZone;
@@ -124,6 +83,7 @@ useEffect(() => {
           }
         : zone
     ));
+    setReservedZoneId(currentZone.id);
 
     setReservedSeat(pendingSeat);
     setPendingSeat(null);
@@ -147,8 +107,9 @@ useEffect(() => {
     ));
 
     setReservedSeat(selectedSeat);
+    setReservedZoneId(currentZone.id); // 🔔 LIEN AVEC LE CONTEXTE
     setSelectedSeat(null);
-    alert(`Place #${selectedSeat + 1} réservée avec succès !`);
+
   };
 
   // Rendu des sièges (violet = sélectionné OU réservé par toi)
@@ -179,9 +140,99 @@ useEffect(() => {
     );
   };
 
+  const noisePriority = {
+    "Silencieux": 1,
+    "Modéré": 2,
+    "Bruyant": 3,
+  };
+
+  const sortedZones = [...zones].sort(
+    (a, b) => noisePriority[a.noise] - noisePriority[b.noise]
+  );
+
+
+  const zoneBgClass =
+    currentZone.noise === 'Silencieux' ? 'bg-green-50' :
+    currentZone.noise === 'Modéré' ? 'bg-yellow-50' :
+    'bg-red-50';
+
+
+  // Trouve la meilleure zone : silencieuse > modérée > bruyante
+  const getRecommendedZone = () => {
+    const sorted = [...zones].sort((a, b) => {
+      const noiseRank = { 'Silencieux': 0, 'Modéré': 1, 'Bruyant': 2 };
+      return noiseRank[a.noise] - noiseRank[b.noise];
+    });
+    return sorted[0]; // première zone "idéale"
+  };
+
+
+  const notifyRecommendedZone = () => {
+  const zone = getRecommendedZone();
+  const now = Date.now();
+  const lastTime = lastNotifiedZones[zone.id] || 0;
+
+  // cooldown = 2 minutes = 120000 ms
+  if (now - lastTime < 120000) return; // ignore si moins de 2min depuis dernière notif
+
+  toast.custom((t) => (
+    <div
+      className={`${
+        t.visible ? 'animate-enter' : 'animate-leave'
+      } max-w-md w-full bg-indigo-100 border-l-4 border-indigo-500 shadow-lg rounded-lg pointer-events-auto flex`}
+    >
+      <div className="flex-1 p-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <Bell className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div className="ml-3 w-0 flex-1 pt-0.5">
+            <p className="text-sm font-medium text-indigo-700">
+              Zone recommandée : {zone.name}
+            </p>
+          </div>
+          <div className="ml-4 flex-shrink-0 flex">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="inline-flex text-indigo-500 hover:text-indigo-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ));
+
+
+  // 🔔 Ajouter dans notifications
+  addAlert({
+    type: 'recommendation',
+    message: `Zone recommandée : ${zone.name}`,
+    time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    target: 'student',
+    zoneId: zone.id
+  });
+
+  // met à jour le timestamp pour cette zone
+  setLastNotifiedZones(prev => ({ ...prev, [zone.id]: now }));
+};
+
+
+
+  useEffect(() => {
+    notifyRecommendedZone();
+  }, [zones]);
+
+  const [lastNotifiedZones, setLastNotifiedZones] = useState({});
+
+
+
+
+
   return (
     <MainLayout
-      title="Réservation de place"
+      title="Carte de la bibliothéque"
       subtitle="Choisissez votre zone et votre siège idéal"
       showBack={true}
     >
@@ -190,7 +241,7 @@ useEffect(() => {
         {/* === GAUCHE === */}
         <div className="space-y-6">
           {/* Filtres */}
-          <div className="bg-white rounded-2xl shadow-lg p-6">
+          {/* <div className="bg-white rounded-2xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
               <Filter className="w-6 h-6 text-indigo-600" />
               <h3 className="text-xl font-semibold">Filtres</h3>
@@ -212,15 +263,18 @@ useEffect(() => {
               <option value="Modéré">Modéré uniquement</option>
               <option value="Bruyant">Bruyant uniquement</option>
             </select>
-          </div>
+          </div> */}
 
           {/* Zones */}
+          <div className="bg-indigo-50 text-indigo-700 text-sm font-medium text-center py-2">
+            Zones classées automatiquement par niveau sonore
+          </div>
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="bg-gradient-to-b from-indigo-400 to-violet-500 text-white p-4">
               <h3 className="text-xl font-bold text-center">Zones disponibles</h3>
             </div>
             <div className="p-4 space-y-3">
-              {filteredZones.map((zone) => {
+              {sortedZones.map((zone) => {
                 const free = zone.capacity - zone.occupation;
                 return (
                   <button
@@ -283,7 +337,7 @@ useEffect(() => {
             
 
            {/* SALLE DE BIBLIOTHÈQUE — VERSION DESIGN COHÉRENT AVEC TON SITE */}
-            <div className="bg-amber-50 rounded-3xl p-8 md:p-12  border border-slate-200 overflow-hidden">
+            <div className={`${zoneBgClass} rounded-3xl p-8 md:p-12 border border-slate-200 overflow-hidden`}>
               <div className="space-y-16 max-w-6xl mx-auto">
 
               {/* === RANGÉE 1 : 2 tables de 6 places (1 à 12) === */}

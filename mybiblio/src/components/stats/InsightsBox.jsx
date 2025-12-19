@@ -3,7 +3,7 @@ import { Lightbulb } from 'lucide-react';
 
 export default function InsightsBox() {
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-8">
+    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-8 mt-10">
       <div className="flex items-center gap-3 mb-6">
         <Lightbulb className="w-8 h-8 text-purple-600" />
         <h2 className="text-2xl font-bold text-slate-900">Insights & Recommandations</h2>
