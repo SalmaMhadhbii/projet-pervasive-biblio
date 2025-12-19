@@ -64,6 +64,8 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('currentUser');
     setUser(null);
+    setReservedZoneId(null);
+    setAlerts([]);
   };
 
   const value = {

@@ -9,7 +9,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const { alerts, removeAlert } = useZones();
+  const { zones, addAlert, alerts, removeAlert  } = useZones();
+  
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
 
@@ -29,15 +30,23 @@ export default function Navbar() {
       : []),
   ];
 
-
-  // Trouve la meilleure zone : silencieuse > modérée > bruyante
+  
+  const [lastNotifiedZones, setLastNotifiedZones] = useState({});
   const getRecommendedZone = () => {
+    if (!zones || zones.length === 0) return null;
     const sorted = [...zones].sort((a, b) => {
       const noiseRank = { 'Silencieux': 0, 'Modéré': 1, 'Bruyant': 2 };
       return noiseRank[a.noise] - noiseRank[b.noise];
     });
-    return sorted[0]; // première zone "idéale"
+    return sorted[0];
   };
+
+  useEffect(() => {
+    if (zones && zones.length > 0) {
+      notifyRecommendedZone();
+    }
+  }, [zones]);
+
 
 
   return (

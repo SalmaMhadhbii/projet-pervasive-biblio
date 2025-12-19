@@ -39,7 +39,8 @@ export default function Auth() {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 z-0">
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -162,6 +163,7 @@ export default function Auth() {
             </button>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );
