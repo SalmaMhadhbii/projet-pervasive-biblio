@@ -13,9 +13,10 @@ export function ZonesProvider({ children }) {
   const [reservedZoneId, setReservedZoneId] = useState(null); // null = pas de réservation
 
 
-  const removeAlert = (index) => {
-    setAlerts(prev => prev.filter((_, i) => i !== index));
-  };
+  const removeAlert = (id) => {
+  setAlerts(prev => prev.filter(alert => alert.id !== id));
+};
+
 
 
   const sendNudgeToStudents = (zoneId, message) => {
@@ -156,10 +157,18 @@ const deleteZone = (zoneId) => {
 const addAlert = ({ message, type = "alert", target = "student", zoneId = null }) => {
   const time = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
   setAlerts(prev => [
-    { time, message, type, target, zoneId },
+    {
+      id: Date.now() + Math.random(), // 👈 ID UNIQUE
+      time,
+      message,
+      type,
+      target,
+      zoneId
+    },
     ...prev
   ].slice(0, 20));
 };
+
 
 
 

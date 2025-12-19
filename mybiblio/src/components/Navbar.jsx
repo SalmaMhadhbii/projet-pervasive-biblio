@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, Menu, X, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -31,22 +31,7 @@ export default function Navbar() {
   ];
 
   
-  const [lastNotifiedZones, setLastNotifiedZones] = useState({});
-  const getRecommendedZone = () => {
-    if (!zones || zones.length === 0) return null;
-    const sorted = [...zones].sort((a, b) => {
-      const noiseRank = { 'Silencieux': 0, 'Modéré': 1, 'Bruyant': 2 };
-      return noiseRank[a.noise] - noiseRank[b.noise];
-    });
-    return sorted[0];
-  };
-
-  useEffect(() => {
-    if (zones && zones.length > 0) {
-      notifyRecommendedZone();
-    }
-  }, [zones]);
-
+   
 
 
   return (
@@ -115,9 +100,9 @@ export default function Navbar() {
 
                 <div className="max-h-96 overflow-y-auto">
                   {filteredAlerts.length > 0 ? (
-                    filteredAlerts.slice(0, 5).map((alert, index) => (
+                    filteredAlerts.slice(0, 5).map(alert => (
                       <div
-                        key={index}
+                        key={alert.id}
                         className="p-4 border-b last:border-0 hover:bg-slate-50 flex items-start justify-between gap-3"
                       >
                         {/* Texte notification */}
@@ -134,7 +119,7 @@ export default function Navbar() {
 
                         {/* Bouton supprimer */}
                         <button
-                          onClick={() => removeAlert(index)}
+                          onClick={() => removeAlert(alert.id)}
                           className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition"
                           title="Supprimer"
                         >
